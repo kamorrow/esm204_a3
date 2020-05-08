@@ -1,0 +1,14 @@
+---
+title: 'Homework #3'
+author: "Keene Morrow"
+date: "5/8/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+
+```
+
