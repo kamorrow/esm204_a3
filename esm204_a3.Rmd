@@ -10,13 +10,26 @@ knitr::opts_chunk$set(echo = TRUE)
 
 library(tidyverse)
 library(here)
+library(janitor)
 
-data <- read_csv("esm204_hw3_data.csv")
+data <- read_csv("esm204_hw3_data.csv") %>%
+  janitor::clean_names() %>%
+  rename(q_low = q_low_gallons,
+         q_high = q_high_gallons,
+         price = price_dollars)
 ```
 
 ESM 204: Incidence of Gas Tax
 
-This homework asks you to examine the distributional effects of a gas tax. The overall questions are: (1) What will be the distributional effects of the tax? (2) How much revenue will be generated for infrastructure repairs? (3) By how much will environmental damage be reduced and who will benefit? (4) What is the role of electric vehicle technology?
+This homework asks you to examine the distributional effects of a gas tax. The overall questions are:
+
+(1) What will be the distributional effects of the tax?
+
+(2) How much revenue will be generated for infrastructure repairs?
+
+(3) By how much will environmental damage be reduced and who will benefit?
+
+(4) What is the role of electric vehicle technology?
 
 You can use the following stylized facts:
 
@@ -26,12 +39,86 @@ You can use the following stylized facts:
 - The marginal cost of producing a gallon of gasoline is linear and has price-intercept of 0. For the purposes of this exercise, you can assume that the country in question is self-contained in supply and demand (you don’t need to worry about global markets).
 - Consuming each gallon of gasoline creates an environmental and health externality in the country of approximately \$1.50. In addition, it imposes an externality (from climate change) of about \$0.50 on the rest of the world.
 
+```{r}
+#Low Income Model
+low_lm <- lm(price ~ q_low, data = data)
+
+print(low_lm)
+print(low_lm$coefficients[1])
+print(low_lm$coefficients[2])
+
+predict_low <- function(q, low_lm){
+  b0 <- low_lm$coefficients["(Intercept)"]
+  b1 <- low_lm$coefficients["q_low"]
+  predicted_low <- b0 + b1 * q
+  return(predicted_low)
+}
+
+
+# High Income Model
+high_lm <- lm(price ~ q_high, data = data)
+
+print(high_lm)
+print(high_lm$coefficients[1])
+print(high_lm$coefficients[2])
+
+predict_high <- function(q, high_lm){
+  b0 <- high_lm$coefficients["(Intercept)"]
+  b1 <- high_lm$coefficients["q_high"]
+  predicted_high <- b0 + b1 * q
+  return(predicted_high)
+}
+
+
+
+
+
+# Plot
+ggplot(data = data) +
+  # blue points for low income demand
+  geom_point(aes(x = q_low,
+                 y = price),
+             color = "blue") +
+  # blue line for low income demand curve
+  geom_abline(yintercept = low_lm$coefficients[1],
+              slope = low_lm$coefficients[2])
+  # dark green points for high income demand
+  geom_point(aes(x = q_high,
+                 y = price),
+             color = "dark green") +
+  # black line at $3.00/gallon for current gas price
+  geom_hline(yintercept = 3) +
+  labs(y = "Price (dollars)",
+       x = "Quantity (gallons)") #+
+  # marginal cost of production (linear, price-intercept of 0)
+  
+  # # marginal external cost = $1.50/gallon (nationally)
+  # geom_line(intercept = 0,
+  #             slope = 1.5,
+  #             color = "red") +
+  # # marginal external cost = $0.50/gallon (internationally)
+  #   geom_abline(intercept = 0,
+  #             slope = 0.5,
+  #             color = "dark red") 
+```
+
 
 Your assignment is to walk through the following analyses and then draft a memo to the Council of Economic Advisors advising them on the answers to the four questions posed at the top of this page. You should include a technical appendix with responses to the questions below:
 
 
 
 1. What is the aggregate daily demand curve for gasoline? What is the supply curve for gasoline? What is the “benefit” to consumers under the status quo? What is the “benefit” to producers under the status quo? What is the environmental cost under the status quo (locally and in the rest of the world)?
+
+*Aggregate damnd: sum horizontally*
+```{r}
+agg <- data %>%
+  mutate(q_agg = q_low + q_high)
+
+supply <- data.frame(
+  price = ,
+  q = 
+)
+```
 
 
 
