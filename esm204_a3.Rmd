@@ -41,11 +41,15 @@ You can use the following stylized facts:
 
 ```{r}
 # Demand Regressions
+
+#------------------
 #Low Income Model
+#------------------
 low_lm <- lm(price ~ q_low, data = data)
 
 print(low_lm)
 
+# Sam's weird hard function for p
 predict_low_price <- function(q, low_lm){
   b0 <- low_lm$coefficients["(Intercept)"]
   b1 <- low_lm$coefficients["q_low"]
@@ -53,6 +57,7 @@ predict_low_price <- function(q, low_lm){
   return(predicted_p_low)
 }
 
+# Sam's weird hard function for q
 predict_low_q <- function(p, low_lm){
   b0 <- low_lm$coefficients["(Intercept)"]
   b1 <- low_lm$coefficients["q_low"]
@@ -60,12 +65,29 @@ predict_low_q <- function(p, low_lm){
   return(predicted_q_low)
 }
 
+# Easy function for p
+low_p_fun <- function(q){
+  predicted_p_low <- low_lm$coefficients["(Intercept)"] + low_lm$coefficients["q_low"] * q
+  return(predicted_p_low)
+}
 
+# Easy function for q
+low_q_fun <- function(p){
+  predicted_q_low <- (p - low_lm$coefficients["(Intercept)"]) / low_lm$coefficients["q_low"]
+  return(predicted_q_low)
+}
+
+# x intercept low income
+xint_low_p <- (0 - low_lm$coefficients["(Intercept)"]) / low_lm$coefficients["q_low"]
+
+#------------------
 # High Income Model
+#------------------
 high_lm <- lm(price ~ q_high, data = data)
 
 print(high_lm)
 
+# Sam's weird hard function for p
 predict_high_price <- function(q, high_lm){
   b0 <- high_lm$coefficients["(Intercept)"]
   b1 <- high_lm$coefficients["q_high"]
@@ -73,6 +95,7 @@ predict_high_price <- function(q, high_lm){
   return(predicted_p_high)
 }
 
+# Sam's weird hard function for q
 predict_high_q <- function(p, high_lm){
   b0 <- high_lm$coefficients["(Intercept)"]
   b1 <- high_lm$coefficients["q_high"]
@@ -80,8 +103,24 @@ predict_high_q <- function(p, high_lm){
   return(predicted_q_high)
 }
 
-# Predictions
+# Easy function for p
+high_p_fun <- function(q){
+  predicted_p_high <- high_lm$coefficients["(Intercept)"] + high_lm$coefficients["q_high"] * q
+  return(predicted_p_high)
+}
 
+# Easy function for q
+high_q_fun <- function(p){
+  predicted_q_high <- (p - high_lm$coefficients["(Intercept)"]) / high_lm$coefficients["q_high"]
+  return(predicted_q_high)
+}
+
+# x intercept high income
+xint_high_p <- (0 - high_lm$coefficients["(Intercept)"]) / high_lm$coefficients["q_high"]
+
+#------------------
+# Predictions
+#------------------
 q_vector <- seq(0, 578800, by = 100)
 p_vector <- seq(0, 16, by = 0.1)
 
@@ -97,6 +136,11 @@ predict_demand_p <- data.frame(p_vector) %>%
   mutate(low_q = ifelse(low_q < 0, NA, low_q),
          high_q = ifelse(high_q < 0, NA, high_q))
 
+#------------------
+# Status Quo Demand
+#------------------
+dmd_sq_low <- low_q_fun(3)
+dmd_sq_high <- high_q_fun(3)
 
 ```
 
@@ -109,56 +153,6 @@ High Income Demand:
 MWTP_d = `r high_lm$coefficients["(Intercept)"]` + `r high_lm$coefficients["q_high"]` * q
 
 
-```{r}
-# Plot
-
-ggplot() +
-  # low income demand
-  geom_point(data = data,
-             aes(x = q_low,
-                 y = price),
-             color = "blue") +
-  geom_line(data = predict_demand,
-             aes(x = q_vector,
-                 y = low_price),
-             color = "blue") +
-  geom_text(aes(x = 150000,
-            y = 4),
-            label = "Low Income",
-            color = "blue",
-            hjust = 0) +
-  # high income demand
-  geom_point(data = data,
-             aes(x = q_high,
-                 y = price),
-             color = "dark green") +
-  geom_line(data = predict_demand,
-            aes(x = q_vector,
-                y = high_price),
-            color = "dark green") +
-  geom_text(aes(x = 500000,
-            y = 4),
-            label = "High Income",
-            color = "dark green",
-            hjust = 0) +
-  # black line at $3.00/gallon for current gas price
-  geom_hline(yintercept = 3) +
-  geom_text(aes(x = 0,
-                y = 2.95),
-            label = "Current Gas Price",
-            hjust = 0,
-            vjust = 1) +
-  # Aesthetics
-  labs(title = "Demand for Gasoline",
-       y = "Price (dollars)",
-       x = "Quantity (gallons)",
-       caption = "\nESM 204 Spring 2020\nElliott Matthews & Keene Morrow") +
-  scale_x_continuous(expand = c(0, 0)) +
-  scale_y_continuous(expand = c(0, 0)) +
-  theme_minimal() +
-  theme(plot.caption = element_text(hjust = 0, face = "italic"))
-  
-```
 
 
 Your assignment is to walk through the following analyses and then draft a memo to the Council of Economic Advisors advising them on the answers to the four questions posed at the top of this page. You should include a technical appendix with responses to the questions below:
@@ -173,25 +167,41 @@ Your assignment is to walk through the following analyses and then draft a memo 
 agg <- predict_demand_p %>%
   mutate(q_agg = low_q + high_q)
 
+# Easy function for q
+agg_q_fun <- function(p){
+  agg_q <- ((p - high_lm$coefficients["(Intercept)"]) / high_lm$coefficients["q_high"]) - ((p - low_lm$coefficients["(Intercept)"]) / low_lm$coefficients["q_low"])
+  return(agg_q)
+}
+
+dmd_sq_agg <- agg_q_fun(3)
+
 ggplot() +
   # low income demand
-  geom_line(data = predict_demand,
-             aes(x = q_vector,
-                 y = low_price),
+  geom_point(data = data,
+             aes(x = q_low,
+                 y = price),
              color = "blue") +
+  geom_line(data = predict_demand,
+            aes(x = q_vector,
+                y = low_price),
+            color = "blue") +
   geom_text(aes(x = 130000,
-            y = 4),
+                y = 4),
             label = "Low Income",
             color = "blue",
             hjust = 0,
             angle = -55) +
   # high income demand
+  geom_point(data = data,
+             aes(x = q_high,
+                 y = price),
+             color = "dark green") +
   geom_line(data = predict_demand,
             aes(x = q_vector,
                 y = high_price),
             color = "dark green") +
   geom_text(aes(x = 460000,
-            y = 4),
+                y = 4),
             label = "High Income",
             color = "dark green",
             hjust = 0,
@@ -212,6 +222,13 @@ ggplot() +
             label = "Aggregate",
             hjust = 0,
             angle = -32) +
+  # black line at $3.00/gallon for current gas price
+  geom_hline(yintercept = 3) +
+  geom_text(aes(x = 0,
+                y = 2.95),
+            label = "Current Gas Price",
+            hjust = 0,
+            vjust = 1) +
   # Aesthetics
   labs(title = "Demand for Gasoline",
        y = "Price (dollars)",
@@ -225,7 +242,7 @@ ggplot() +
 
 ```{r}
 # Benefit to Consumers under Status Quo
-
+benefit_c_sq <- (integrate(low_p_fun, 0, dmd_sq_low)$value -  (dmd_sq_low * 3)) + (integrate(high_p_fun, 0, dmd_sq_high)$value - (dmd_sq_high * 3))
 
 # Benefit to Producers under Status Quo
 
@@ -234,6 +251,7 @@ ggplot() +
 ## Nationally
 
 ## Internationally
+  
 ```
 
 
