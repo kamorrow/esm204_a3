@@ -364,29 +364,37 @@ benefit_p_sq <- integrate(supply_fun, 0, dmd_sq_agg)$value
 
 ## Nationally
 
-ntl_env_cost <- 1.5
+ntl_MEC <- 1.5
 
-supply_fun_ntl_env_cost <- function(q){
-  p <- ntl_env_cost
+supply_fun_ntl_MEC <- function(q){
+  p <- ntl_MEC
   return(p)
 }
 
-predict_supply_ntl_env_cost <- data.frame(q = q_vector_sup) %>%
-  mutate(p = supply_fun_ntl_env_cost(q))
+predict_supply_ntl_MEC <- data.frame(q = q_vector_sup) %>%
+  mutate(p = supply_fun_ntl_MEC(q))
+
+ntl_agg <- agg_q_fun(ntl_MEC) # intercept with aggregate demand
+
+ntl_env_cost <- (1.5 - 0) * (ntl_agg - 0)
 
 ## Internationally
 
-intl_env_cost <- 0.5
+intl_MEC <- 0.5
 
-supply_fun_intl_env_cost <- function(q){
-  p <- intl_env_cost
+supply_fun_intl_MEC <- function(q){
+  p <- intl_MEC
   return(p)
 }
 
-predict_supply_intl_env_cost <- data.frame(q = q_vector_sup) %>%
-  mutate(p = supply_fun_intl_env_cost(q))
+predict_supply_intl_MEC <- data.frame(q = q_vector_sup) %>%
+  mutate(p = supply_fun_intl_MEC(q))
 
+intl_agg <- agg_q_fun(intl_MEC) # intercept with aggregate demand
 
+intl_env_cost <- (1.5 - 0) * (intl_agg - 0)
+
+# Plot
 ggplot() +
   # aggregate demand
   geom_line(data = agg,
@@ -410,8 +418,11 @@ ggplot() +
             color = "purple",
             hjust = 0,
             angle = 10) +
+  geom_point(aes(x = dmd_sq_agg,
+                 y = 3),
+             color = "purple") +
   # supply with national cost
-    geom_line(data = predict_supply_ntl_env_cost,
+    geom_line(data = predict_supply_ntl_MEC,
             aes(x = q,
                 y = p),
             color = "blue") +
@@ -420,8 +431,11 @@ ggplot() +
             label = "National",
             color = "blue",
             hjust = 0) +
+  geom_point(aes(x = ntl_agg,
+                 y = ntl_MEC),
+             color = "blue") +
   # supply with international cost
-    geom_line(data = predict_supply_intl_env_cost,
+    geom_line(data = predict_supply_intl_MEC,
             aes(x = q,
                 y = p),
             color = "navy") +
@@ -430,6 +444,9 @@ ggplot() +
             label = "International",
             color = "navy",
             hjust = 0) +
+  geom_point(aes(x = intl_agg,
+                 y = intl_MEC),
+             color = "navy") +
   # black line at $3.00/gallon for current gas price
   geom_hline(yintercept = 3,
              color = "black") +
@@ -445,6 +462,8 @@ ggplot() +
   
 ```
 
+National Environmental Cost: `r ntl_env_cost`
+Internationsl Environmental Cost: `r intl_env_cost`
 
 2. How is the current consumer benefit divided between “High” and “Low” income consumers?
 
