@@ -144,7 +144,7 @@ dmd_sq_high <- high_q_fun(3)
 
 ```
 
-### Equations
+### Demand Equations
 
 Low Income Demand:
 MWTP_d = `r low_lm$coefficients["(Intercept)"]` + `r low_lm$coefficients["q_low"]` * q
@@ -165,7 +165,7 @@ Your assignment is to walk through the following analyses and then draft a memo 
 ```{r}
 # Aggregate demand: sum horizontally
 agg <- predict_demand_p %>%
-  mutate(q_agg = low_q + high_q)
+  mutate(q_agg = ifelse(is.na(low_q), high_q, low_q + high_q))
 
 # Easy function for q
 agg_q_fun <- function(p){
@@ -175,6 +175,32 @@ agg_q_fun <- function(p){
 
 dmd_sq_agg <- agg_q_fun(3)
 
+# Supply
+
+#We need to draw a line between 0,0 and the aggregate demand intersection at $3.00. Then find the slope of that line.  That will give us the supply equation.
+
+# also algebra looked good for aggregate and orignial p & q functions
+
+supply_m <- 3 / dmd_sq_agg #slope
+
+supply_fun <- function(q){
+  p <- supply_m * q + 0
+  return(p)
+}
+
+q_vector_sup <- seq(0, 750000, by = 100)
+
+predict_supply <- data.frame(q = q_vector_sup) %>%
+  mutate(p = supply_fun(q))
+
+```
+
+### Supply Equation
+p = `r supply_m` * q
+
+
+```{r}
+# The Big Status Quo Plot
 ggplot() +
   # low income demand
   geom_point(data = data,
@@ -185,9 +211,9 @@ ggplot() +
             aes(x = q_vector,
                 y = low_price),
             color = "blue") +
-  geom_text(aes(x = 130000,
-                y = 4),
-            label = "Low Income",
+  geom_text(aes(x = 150000,
+                y = 2.5),
+            label = "Low",
             color = "blue",
             hjust = 0,
             angle = -55) +
@@ -200,9 +226,9 @@ ggplot() +
             aes(x = q_vector,
                 y = high_price),
             color = "dark green") +
-  geom_text(aes(x = 460000,
-                y = 4),
-            label = "High Income",
+  geom_text(aes(x = 510000,
+                y = 2.5),
+            label = "High",
             color = "dark green",
             hjust = 0,
             angle = -32) +
@@ -212,8 +238,8 @@ ggplot() +
                 y = p_vector),
             color = "black",
             linetype = "dashed") +
-  geom_text(aes(x = 585000,
-                y = 4),
+  geom_text(aes(x = 500000,
+                y = 6),
             label = "Aggregate",
             hjust = 0,
             angle = -25) +
@@ -222,11 +248,24 @@ ggplot() +
             label = "Aggregate",
             hjust = 0,
             angle = -32) +
+  # supply
+  geom_line(data = predict_supply,
+            aes(x = q,
+                y = p),
+            color = "purple") +
+  geom_text(aes(x = 700000,
+                y = 4),
+            label = "Supply",
+            color = "purple",
+            hjust = 0,
+            angle = 10) +
   # black line at $3.00/gallon for current gas price
-  geom_hline(yintercept = 3) +
+  geom_hline(yintercept = 3,
+             color = "grey50") +
   geom_text(aes(x = 0,
                 y = 2.95),
-            label = "Current Gas Price",
+            label = "Current Price",
+            color = "grey50",
             hjust = 0,
             vjust = 1) +
   # Aesthetics
@@ -240,38 +279,189 @@ ggplot() +
   theme(plot.caption = element_text(hjust = 0, face = "italic"))
 ```
 
+
+
+
 ```{r}
-# Supply
+# Benefit Plot
 
-#We need to draw a line between 0,0 and the aggregate demand intersection at $3.00. Then find the slope of that line.  That will give us the supply equation.
-
-# also algebra looked good for aggregate and orignial p & q functions
-
+ggplot() +
+  # aggregate demand
+  geom_line(data = agg,
+            aes(x = q_agg,
+                y = p_vector),
+            color = "black",
+            linetype = "dashed") +
+  geom_text(aes(x = 300000,
+                y = 9.5),
+            label = "Aggregate",
+            hjust = 0,
+            angle = -25) +
+  geom_ribbon(data = agg %>% filter(q_agg < dmd_sq_agg),
+            aes(x = q_agg,
+                ymax = p_vector,
+                ymin = 3),
+                alpha = 0.5) +
+  # supply
+  geom_line(data = predict_supply,
+            aes(x = q,
+                y = p),
+            color = "purple") +
+  geom_text(aes(x = 700000,
+                y = 4),
+            label = "Supply",
+            color = "purple",
+            hjust = 0,
+            angle = 10) +
+    geom_ribbon(data = predict_supply %>% filter(q < dmd_sq_agg),
+            aes(x = q,
+                ymax = 3,
+                ymin = p),
+                alpha = 0.5,
+            fill = "purple") +
+  # black line at $3.00/gallon for current gas price
+  geom_hline(yintercept = 3,
+             color = "black") +
+  # geom_text(aes(x = 0,
+  #               y = 2.95),
+  #           label = "Current Price",
+  #           color = "black",
+  #           hjust = 0,
+  #           vjust = 1) +
+  # Aesthetics
+  labs(title = "Benefit",
+       subtitle = "Status Quo",
+       y = "Price (dollars)",
+       x = "Quantity (gallons)",
+       caption = "\nESM 204 Spring 2020\nElliott Matthews & Keene Morrow") +
+  scale_x_continuous(expand = c(0, 0)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  theme_minimal() +
+  theme(plot.caption = element_text(hjust = 0, face = "italic"))
 ```
 
 
 ```{r}
 # Benefit to Consumers under Status Quo
 benefit_c_sq <- (integrate(low_p_fun, 0, dmd_sq_low)$value - (dmd_sq_low * 3)) + (integrate(high_p_fun, 0, dmd_sq_high)$value - (dmd_sq_high * 3))
+# I think this one is still good post supply considerations
 
 # Benefit to Producers under Status Quo
-benefit_p_sq <- (dmd_sq_low * 3) + (dmd_sq_high * 3)
-#I think this needs to be altered too once the supply curve is calculated. It should be the triangle above the supply curve and below the market price.
+benefit_p_sq <- integrate(supply_fun, 0, dmd_sq_agg)$value
+#I think this needs to be altered too once the supply curve is calculated. It should be the triangle above the supply curve and below the market price. - EM
+# word - KM
+# same as (dmd_sq_agg * 3)/2
 
 
 # Environmental Cost under Status Quo
 
-#Need to add the external cost listed in the problem statement to the supply curve we calculate. From there we solve for the new P and Q (the external cost shifts the supply curve upward, P goes up, Q goes down). The environmental cost is the rectangular area defined by PxQ. **** We do this for both local and world values ****
+#Need to add the external cost listed in the problem statement to the supply curve we calculate. From there we solve for the new P and Q (the external cost shifts the supply curve upward, P goes up, Q goes down). The environmental cost is the rectangular area defined by PxQ. **** We do this for both local and world values **** - EM
+
+# In other words, the environmental cost going to be the new supply function taking into account the environmental costs, integrated from 0 to the new intercept? - KM
 
 ## Nationally
 
+ntl_env_cost <- 1.5
+
+supply_fun_ntl_env_cost <- function(q){
+  p <- supply_m * q + ntl_env_cost
+  return(p)
+}
+
+predict_supply_ntl_env_cost <- data.frame(q = q_vector_sup) %>%
+  mutate(p = supply_fun_ntl_env_cost(q))
+
 ## Internationally
+
+intl_env_cost <- 0.5
+
+supply_fun_intl_env_cost <- function(q){
+  p <- supply_m * q + intl_env_cost
+  return(p)
+}
+
+predict_supply_intl_env_cost <- data.frame(q = q_vector_sup) %>%
+  mutate(p = supply_fun_intl_env_cost(q))
+
+
+ggplot() +
+  # aggregate demand
+  geom_line(data = agg,
+            aes(x = q_agg,
+                y = p_vector),
+            color = "black",
+            linetype = "dashed") +
+  geom_text(aes(x = 300000,
+                y = 9.5),
+            label = "Aggregate",
+            hjust = 0,
+            angle = -25) +
+  # supply
+  geom_line(data = predict_supply,
+            aes(x = q,
+                y = p),
+            color = "purple") +
+  geom_text(aes(x = 760000,
+                y = 3.5),
+            label = "Supply",
+            color = "purple",
+            hjust = 0,
+            angle = 10) +
+  # supply with national cost
+    geom_line(data = predict_supply_ntl_env_cost,
+            aes(x = q,
+                y = p),
+            color = "blue") +
+    geom_text(aes(x = 760000,
+                y = 5.5),
+            label = "National",
+            color = "blue",
+            hjust = 0,
+            angle = 10) +
+  # supply with international cost
+    geom_line(data = predict_supply_intl_env_cost,
+            aes(x = q,
+                y = p),
+            color = "navy") +
+  geom_text(aes(x = 760000,
+                y = 4.5),
+            label = "International",
+            color = "navy",
+            hjust = 0,
+            angle = 10) +
+  # black line at $3.00/gallon for current gas price
+  geom_hline(yintercept = 3,
+             color = "black") +
+  labs(title = "",
+       subtitle = "",
+       y = "Price (dollars)",
+       x = "Quantity (gallons)",
+       caption = "\nESM 204 Spring 2020\nElliott Matthews & Keene Morrow") +
+  scale_x_continuous(expand = c(0, 100000)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  theme_minimal() +
+  theme(plot.caption = element_text(hjust = 0, face = "italic"))
   
 ```
 
 
 2. How is the current consumer benefit divided between “High” and “Low” income consumers?
 
+```{r}
+benefit_low_sq <- (integrate(low_p_fun, 0, dmd_sq_low)$value - (dmd_sq_low * 3))
+benefit_high_sq <- (integrate(high_p_fun, 0, dmd_sq_high)$value - (dmd_sq_high * 3))
+
+pct_benefit_low_sq <- (benefit_low_sq / benefit_c_sq) * 100
+pct_benefit_high_sq <- (benefit_high_sq / benefit_c_sq) * 100
+```
+
+Total Benefit: `r round(benefit_c_sq, 2)`
+
+Low Income Benefit: `r round(benefit_low_sq, 2)`
+Low Income Percent of Total Benefit: `r round(pct_benefit_low_sq, 2)`
+
+High Income Benefit: `r round(benefit_high_sq, 2)`
+High Income Percent of Total Benefit: `r round(pct_benefit_high_sq, 2)`
 
 
 3. A gas tax of $1.00/gal. is proposed. What would be the effects of this tax on:
