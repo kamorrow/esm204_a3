@@ -169,7 +169,7 @@ agg <- predict_demand_p %>%
 
 # Easy function for q
 agg_q_fun <- function(p){
-  agg_q <- ((p - high_lm$coefficients["(Intercept)"]) / high_lm$coefficients["q_high"]) - ((p - low_lm$coefficients["(Intercept)"]) / low_lm$coefficients["q_low"])
+  agg_q <- ((p - high_lm$coefficients["(Intercept)"]) / high_lm$coefficients["q_high"]) + ((p - low_lm$coefficients["(Intercept)"]) / low_lm$coefficients["q_low"])
   return(agg_q)
 }
 
@@ -242,10 +242,10 @@ ggplot() +
 
 ```{r}
 # Benefit to Consumers under Status Quo
-benefit_c_sq <- (integrate(low_p_fun, 0, dmd_sq_low)$value -  (dmd_sq_low * 3)) + (integrate(high_p_fun, 0, dmd_sq_high)$value - (dmd_sq_high * 3))
+benefit_c_sq <- (integrate(low_p_fun, 0, dmd_sq_low)$value - (dmd_sq_low * 3)) + (integrate(high_p_fun, 0, dmd_sq_high)$value - (dmd_sq_high * 3))
 
 # Benefit to Producers under Status Quo
-
+benefit_p_sq <- (dmd_sq_low * 3) + (dmd_sq_high * 3)
 
 # Environmental Cost under Status Quo
 ## Nationally
