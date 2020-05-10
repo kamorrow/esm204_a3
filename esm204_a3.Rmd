@@ -44,14 +44,19 @@ You can use the following stylized facts:
 low_lm <- lm(price ~ q_low, data = data)
 
 print(low_lm)
-print(low_lm$coefficients[1])
-print(low_lm$coefficients[2])
 
-predict_low <- function(q, low_lm){
+predict_low_price <- function(q, low_lm){
   b0 <- low_lm$coefficients["(Intercept)"]
   b1 <- low_lm$coefficients["q_low"]
-  predicted_low <- b0 + b1 * q
-  return(predicted_low)
+  predicted_p_low <- b0 + b1 * q
+  return(predicted_p_low)
+}
+
+predict_low_q <- function(p, low_lm){
+  b0 <- low_lm$coefficients["(Intercept)"]
+  b1 <- low_lm$coefficients["q_low"]
+  predicted_q_low <- (p - b0) / b1
+  return(predicted_q_low)
 }
 
 
@@ -59,47 +64,91 @@ predict_low <- function(q, low_lm){
 high_lm <- lm(price ~ q_high, data = data)
 
 print(high_lm)
-print(high_lm$coefficients[1])
-print(high_lm$coefficients[2])
 
-predict_high <- function(q, high_lm){
+predict_high_price <- function(q, high_lm){
   b0 <- high_lm$coefficients["(Intercept)"]
   b1 <- high_lm$coefficients["q_high"]
-  predicted_high <- b0 + b1 * q
-  return(predicted_high)
+  predicted_p_high <- b0 + b1 * q
+  return(predicted_p_high)
 }
 
+predict_high_q <- function(p, high_lm){
+  b0 <- high_lm$coefficients["(Intercept)"]
+  b1 <- high_lm$coefficients["q_high"]
+  predicted_q_high <- (p - b0) / b1
+  return(predicted_q_high)
+}
+
+# Predictions
+
+q_vector <- seq(0, 578800, by = 100)
+p_vector <- seq(0, 16, by = 0.1)
+
+predict_demand <- data.frame(q_vector) %>%
+  mutate(low_price = predict_low_price(q_vector, low_lm),
+         high_price =  predict_high_price(q_vector, high_lm)) %>%
+  mutate(low_price = ifelse(low_price < 0, NA, low_price),
+         high_price = ifelse(high_price < 0, NA, high_price))
+
+predict_demand_p <- data.frame(p_vector) %>%
+  mutate(low_q = predict_low_q(p_vector, low_lm),
+         high_q =  predict_high_q(p_vector, high_lm))%>%
+  mutate(low_q = ifelse(low_q < 0, NA, low_q),
+         high_q = ifelse(high_q < 0, NA, high_q))
 
 
+```
 
 
+```{r}
 # Plot
-ggplot(data = data) +
-  # blue points for low income demand
-  geom_point(aes(x = q_low,
+
+ggplot() +
+  # low income demand
+  geom_point(data = data,
+             aes(x = q_low,
                  y = price),
              color = "blue") +
-  # blue line for low income demand curve
-  geom_abline(yintercept = low_lm$coefficients[1],
-              slope = low_lm$coefficients[2])
-  # dark green points for high income demand
-  geom_point(aes(x = q_high,
+  geom_line(data = predict_demand,
+             aes(x = q_vector,
+                 y = low_price),
+             color = "blue") +
+  geom_text(aes(x = 150000,
+            y = 4),
+            label = "Low Income",
+            color = "blue",
+            hjust = 0) +
+  # high income demand
+  geom_point(data = data,
+             aes(x = q_high,
                  y = price),
              color = "dark green") +
+  geom_line(data = predict_demand,
+            aes(x = q_vector,
+                y = high_price),
+            color = "dark green") +
+  geom_text(aes(x = 500000,
+            y = 4),
+            label = "High Income",
+            color = "dark green",
+            hjust = 0) +
   # black line at $3.00/gallon for current gas price
   geom_hline(yintercept = 3) +
-  labs(y = "Price (dollars)",
-       x = "Quantity (gallons)") #+
-  # marginal cost of production (linear, price-intercept of 0)
+  geom_text(aes(x = 0,
+                y = 2.95),
+            label = "Current Gas Price",
+            hjust = 0,
+            vjust = 1) +
+  # Aesthetics
+  labs(title = "Demand for Gasoline",
+       y = "Price (dollars)",
+       x = "Quantity (gallons)",
+       caption = "\nESM 204 Spring 2020\nElliott Matthews & Keene Morrow") +
+  scale_x_continuous(expand = c(0, 0)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  theme_minimal() +
+  theme(plot.caption = element_text(hjust = 0, face = "italic"))
   
-  # # marginal external cost = $1.50/gallon (nationally)
-  # geom_line(intercept = 0,
-  #             slope = 1.5,
-  #             color = "red") +
-  # # marginal external cost = $0.50/gallon (internationally)
-  #   geom_abline(intercept = 0,
-  #             slope = 0.5,
-  #             color = "dark red") 
 ```
 
 
@@ -109,15 +158,59 @@ Your assignment is to walk through the following analyses and then draft a memo 
 
 1. What is the aggregate daily demand curve for gasoline? What is the supply curve for gasoline? What is the “benefit” to consumers under the status quo? What is the “benefit” to producers under the status quo? What is the environmental cost under the status quo (locally and in the rest of the world)?
 
-*Aggregate damnd: sum horizontally*
+*Aggregate demand: sum horizontally*
 ```{r}
-agg <- data %>%
-  mutate(q_agg = q_low + q_high)
+agg <- predict_demand_p %>%
+  mutate(q_agg = low_q + high_q)
 
-supply <- data.frame(
-  price = ,
-  q = 
-)
+ggplot() +
+  # low income demand
+  geom_line(data = predict_demand,
+             aes(x = q_vector,
+                 y = low_price),
+             color = "blue") +
+  geom_text(aes(x = 130000,
+            y = 4),
+            label = "Low Income",
+            color = "blue",
+            hjust = 0,
+            angle = -55) +
+  # high income demand
+  geom_line(data = predict_demand,
+            aes(x = q_vector,
+                y = high_price),
+            color = "dark green") +
+  geom_text(aes(x = 460000,
+            y = 4),
+            label = "High Income",
+            color = "dark green",
+            hjust = 0,
+            angle = -32) +
+  # aggregate demand
+  geom_line(data = agg,
+            aes(x = q_agg,
+                y = p_vector),
+            color = "black",
+            linetype = "dashed") +
+  geom_text(aes(x = 585000,
+                y = 4),
+            label = "Aggregate",
+            hjust = 0,
+            angle = -25) +
+  geom_text(aes(x = 75000,
+                y = 14.5),
+            label = "Aggregate",
+            hjust = 0,
+            angle = -32) +
+  # Aesthetics
+  labs(title = "Demand for Gasoline",
+       y = "Price (dollars)",
+       x = "Quantity (gallons)",
+       caption = "\nESM 204 Spring 2020\nElliott Matthews & Keene Morrow") +
+  scale_x_continuous(expand = c(0, 0)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  theme_minimal() +
+  theme(plot.caption = element_text(hjust = 0, face = "italic"))
 ```
 
 
