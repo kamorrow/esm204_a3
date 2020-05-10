@@ -256,6 +256,8 @@ benefit_c_sq <- (integrate(low_p_fun, 0, dmd_sq_low)$value - (dmd_sq_low * 3)) +
 
 # Benefit to Producers under Status Quo
 benefit_p_sq <- (dmd_sq_low * 3) + (dmd_sq_high * 3)
+#I think this needs to be altered too once the supply curve is calculated. It should be the triangle above the supply curve and below the market price.
+
 
 # Environmental Cost under Status Quo
 
