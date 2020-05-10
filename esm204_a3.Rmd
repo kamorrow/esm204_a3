@@ -242,6 +242,11 @@ ggplot() +
 
 ```{r}
 # Supply
+
+#We need to draw a line between 0,0 and the aggregate demand intersection at $3.00. Then find the slope of that line.  That will give us the supply equation.
+
+# also algebra looked good for aggregate and orignial p & q functions
+
 ```
 
 
