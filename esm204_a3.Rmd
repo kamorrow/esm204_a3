@@ -348,9 +348,10 @@ benefit_c_sq <- (integrate(low_p_fun, 0, dmd_sq_low)$value - (dmd_sq_low * 3)) +
 
 # Benefit to Producers under Status Quo
 benefit_p_sq <- integrate(supply_fun, 0, dmd_sq_agg)$value
-#I think this needs to be altered too once the supply curve is calculated. It should be the triangle above the supply curve and below the market price. - EM
+#I think this needs to be altered too once the supply curve is calculated. It should be the triangle above the supply curve and below the market price. - GEM
 # word - KM
 # same as (dmd_sq_agg * 3)/2
+# Yes, I agree ^ - GEM
 
 
 # Environmental Cost under Status Quo
@@ -358,6 +359,8 @@ benefit_p_sq <- integrate(supply_fun, 0, dmd_sq_agg)$value
 #Need to add the external cost listed in the problem statement to the supply curve we calculate. From there we solve for the new P and Q (the external cost shifts the supply curve upward, P goes up, Q goes down). The environmental cost is the rectangular area defined by PxQ. **** We do this for both local and world values **** - EM
 
 # In other words, the environmental cost going to be the new supply function taking into account the environmental costs, integrated from 0 to the new intercept? - KM
+
+#  Actually, my interpretation was whack. We don't add the externality onto the supply curve. The given externality will just be a flat curve and will represent the MEC.  Everything under the curve (0-1.50 vertically, and 0 - dm_sq_agg) will be there area we want. Sorry for the confusion- GEM
 
 ## Nationally
 
