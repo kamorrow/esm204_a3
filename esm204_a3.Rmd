@@ -241,6 +241,11 @@ ggplot() +
 ```
 
 ```{r}
+# Supply
+```
+
+
+```{r}
 # Benefit to Consumers under Status Quo
 benefit_c_sq <- (integrate(low_p_fun, 0, dmd_sq_low)$value - (dmd_sq_low * 3)) + (integrate(high_p_fun, 0, dmd_sq_high)$value - (dmd_sq_high * 3))
 
