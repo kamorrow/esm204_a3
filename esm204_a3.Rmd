@@ -673,10 +673,6 @@ q_high_tax <- high_q_fun(p_int_tax)
 pct_q_low_tax <- q_low_tax / q_int_tax
 pct_q_high_tax <- q_high_tax / q_int_tax
 
-```
-
-```{r}
-
 
 tax_vector <- seq(0, 5, 0.01)
 
@@ -720,25 +716,157 @@ b. Overall welfare of “Low” income consumers
 c. Gas producers
 
 ```{r}
-# loss of sales
+# less sold at a higher price, with a lower cost of production
 ```
 
 
 5. A new electric car technology is invented and it lowers the demand curves of all income groups by half (vertically). Under these new demand curves, what are the effects on:
 
+```{r}
+# slope stays the same, it's really just the intercept that is halved - KAM
+
+
+#------------------
+# Low Income Model
+#------------------
+
+# Easy function for q
+low_q_ev_fun <- function(p){
+  predicted_q_low <- (p - (low_lm$coefficients["(Intercept)"]/2)) / low_lm$coefficients["q_low"]
+  return(predicted_q_low)
+}
+
+# x intercept low income
+xint_low_p_ev <- (0 - (low_lm$coefficients["(Intercept)"]/2)) / low_lm$coefficients["q_low"]
+
+#------------------
+# High Income Model
+#------------------
+
+# Easy function for q
+high_q_ev_fun <- function(p){
+  predicted_q_high <- (p - (high_lm$coefficients["(Intercept)"]/2)) / high_lm$coefficients["q_high"]
+  return(predicted_q_high)
+}
+
+# x intercept high income
+xint_high_p_ev <- (0 - (high_lm$coefficients["(Intercept)"]/2)) / high_lm$coefficients["q_high"]
+
+#------------------
+# Data Frame
+#------------------
+
+ev <- data.frame(p = p_vector) %>%
+  mutate(q_low = low_q_ev_fun(p),
+         q_high = high_q_ev_fun(p),
+         q_high = ifelse(q_high < 0, NA, q_high),
+         q_low = ifelse(q_low < 0, NA, q_low),
+         q_tot = ifelse(is.na(q_low), q_high, q_low + q_high)) %>%
+  filter(p < 8)
+
+#------------------
+# Aggregate
+#------------------
+
+# Aggregate demand: sum horizontally
+agg_ev <- ev %>%
+  select(p, q_tot)
+
+agg_ev_lm <- lm(p ~ q_tot, data = agg_ev)
+
+
+agg_p_ev_fun <- function(q){
+  p <- agg_ev_lm$coefficients["(Intercept)"] + agg_ev_lm$coefficients["q_tot"] * q
+  return(p)
+}
+
+agg_q_ev_fun <- function(p){
+  q <- (p - (agg_ev_lm$coefficients["(Intercept)"])) / agg_ev_lm$coefficients["q_tot"]
+  return(q)
+}
+
+agg_ev_check <- data.frame(p = p_vector) %>%
+  mutate(calc_q =  agg_q_ev_fun(p),
+         calc_p = agg_p_ev_fun(calc_q),
+         diff = round(p - calc_p))
+
+#------------------
+# Calculations
+#------------------
+# Intercept of Supply & Aggregate demand
+q_int_ev <-  (agg_ev_lm$coefficients["(Intercept)"] - 0) / (supply_m - agg_ev_lm$coefficients["q_tot"])
+p_int_ev <- agg_p_ev_fun(q_int_ev)
+
+# 
+q_low_ev <- low_q_ev_fun(p_int_ev)
+q_high_ev <- high_q_ev_fun(p_int_ev)
+
+#------------------
+# Now make it a plot
+#------------------
+
+ggplot() +
+  geom_line(data = ev,
+            aes(y = p,
+                x = q_low),
+            color = "blue") +
+  geom_line(data = ev,
+            aes(y = p,
+                x = q_high),
+            color = "dark green") +
+  geom_line(data = ev,
+            aes(y = p,
+                x = q_tot),
+            linetype = "dashed") +
+  geom_line(data = predict_supply %>% filter(q < 400000),
+            aes(x = q,
+                y = p),
+            color = "purple") +
+  geom_point(aes(x = q_int_ev,
+                 y = p_int_ev)) +
+    geom_point(aes(x = q_low_ev,
+                 y = p_int_ev)) +
+    geom_point(aes(x = q_high_ev,
+                 y = p_int_ev)) +
+  geom_hline(aes(yintercept = p_int_ev)) +
+  labs(title = "Electric Vehicle & No Gas Tax",
+       subtitle = "",
+       y = "Price (dollars)",
+       x = "Quantity (gallons)",
+       caption = "\nESM 204 Spring 2020\nElliott Matthews & Keene Morrow") +
+  scale_x_continuous(expand = c(0, 0)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  theme_minimal() +
+  theme(plot.caption = element_text(hjust = 0, face = "italic"))
+  
+            
+
+```
+
+
 a. Gas consumption by “High” income consumers
+
+`r q_high_ev` gallons
 
 
 b. Gas consumption by “Low” income consumers
 
+`r q_low_ev` gallons
+
 
 c. Gas price
+
+$`r round(p_int_ev, 2)` per gallon
 
 
 d. Local environmental damage from gasoline
 
+$`r as.character(q_int_ev * 1.5)`
+
 
 e. Rest of world environmental damage from gasoline
+
+$`r as.character(q_int_ev * 0.5)`
 
 
 6. Compare two situations: (1) Gas tax of $T/gal. but no electric car technology and (2) No gas tax but with electric car technology. What value of T (i.e. what gas tax) makes the local environmental quality equal between these two situations?
