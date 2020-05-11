@@ -898,17 +898,19 @@ pct_benefit_high_sq &lt;- (benefit_high_sq / benefit_c_sq) * 100</code></pre>
 <ol style="list-style-type: lower-alpha">
 <li>The amount of gasoline produced and consumed.</li>
 </ol>
-<pre class="r"><code>supply_tax_p_fun &lt;- function(q){
-  p &lt;- supply_m * q + 1
+<pre class="r"><code>tax &lt;- 1
+
+supply_tax_p_fun &lt;- function(q, tax){
+  p &lt;- supply_m * q + tax
   return(p)
 }
 
-supply_tax_q_fun &lt;- function(p){
-  q &lt;- (p- 1) / supply_m
+supply_tax_q_fun &lt;- function(p, tax){
+  q &lt;- (p - tax) / supply_m
   return(q)
 }
 
-q_int_tax &lt;- (agg_lm$coefficients[&quot;(Intercept)&quot;] - 1)/(supply_m - agg_lm$coefficients[&quot;q&quot;])
+q_int_tax &lt;- (agg_lm$coefficients[&quot;(Intercept)&quot;] - tax)/(supply_m - agg_lm$coefficients[&quot;q&quot;])
 
 q_int_tax</code></pre>
 <pre><code>## (Intercept) 
@@ -918,7 +920,7 @@ q_int_tax</code></pre>
 <li>The price of gasoline.</li>
 </ol>
 <pre class="r"><code>p_int_tax &lt;- agg_p_fun(q_int_tax)
-supply_tax_p_fun(q_int_tax)</code></pre>
+supply_tax_p_fun(q_int_tax, tax)</code></pre>
 <pre><code>## (Intercept) 
 ##    3.794516</code></pre>
 <p>$3.79 per gallon</p>
@@ -955,11 +957,39 @@ supply_tax_p_fun(q_int_tax)</code></pre>
 <ol start="4" style="list-style-type: decimal">
 <li>Now, assume that all revenue from a tax will be redistributed to the two groups in proportion to their pre-tax consumption of gas. For example, if 80% of the gas was consumed by High income consumers, then they get 80% of the tax revenue. Also assume that “Low” income consumers bear all local environmental costs. For a range of gas taxes (ranging from $0 - $5.00/gal), calculate the effects of the tax on:</li>
 </ol>
+<pre class="r"><code>q_low_tax &lt;- low_q_fun(p_int_tax)
+q_high_tax &lt;- high_q_fun(p_int_tax)
+
+pct_q_low_tax &lt;- q_low_tax / q_int_tax
+pct_q_high_tax &lt;- q_high_tax / q_int_tax</code></pre>
+<pre class="r"><code>tax_vector &lt;- seq(0, 5, 0.01)
+
+
+tax_scen &lt;- data.frame(tax = tax_vector) %&gt;%
+  mutate(tot_dmd_q = (agg_lm$coefficients[&quot;(Intercept)&quot;] - tax)/(supply_m - agg_lm$coefficients[&quot;q&quot;]),
+         p = agg_p_fun(tot_dmd_q),
+         low_dmd_q = low_q_fun(p),
+         high_dmd_q = high_q_fun(p),
+         pct_low = low_dmd_q / tot_dmd_q,
+         pct_high = high_dmd_q / tot_dmd_q,
+         env_cost = 1.5 * tot_dmd_q,
+         cs_low = ((low_lm$coefficients[&quot;(Intercept)&quot;] - p) * low_dmd_q) / 2,
+         cs_high = ((high_lm$coefficients[&quot;(Intercept)&quot;] - p) * high_dmd_q) / 2,
+         tax_revenue = tot_dmd_q * tax,
+         tax_low = tax_revenue * pct_low,
+         tax_high = tax_revenue * pct_high,
+         env_cost = 1.5 * tot_dmd_q,
+         welfare_low = cs_low + tax_low - env_cost,
+         welfare_high = cs_high + tax_high,
+         p_supply = supply_tax_p_fun(tot_dmd_q, tax),
+         p_supply_check = supply_tax_p_fun(tot_dmd_q, tax) - tax,
+         welfare_prod = (supply_tax_p_fun(tot_dmd_q, tax) * tot_dmd_q) / 2)</code></pre>
 <ol style="list-style-type: lower-alpha">
 <li><p>Overall welfare of “High” income consumers</p></li>
 <li><p>Overall welfare of “Low” income consumers</p></li>
 <li><p>Gas producers</p></li>
 </ol>
+<pre class="r"><code># loss of sales</code></pre>
 <ol start="5" style="list-style-type: decimal">
 <li>A new electric car technology is invented and it lowers the demand curves of all income groups by half (vertically). Under these new demand curves, what are the effects on:</li>
 </ol>

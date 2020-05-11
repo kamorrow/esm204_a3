@@ -579,17 +579,19 @@ ggplot() +
 a. The amount of gasoline produced and consumed.
 
 ```{r}
-supply_tax_p_fun <- function(q){
-  p <- supply_m * q + 1
+tax <- 1
+
+supply_tax_p_fun <- function(q, tax){
+  p <- supply_m * q + tax
   return(p)
 }
 
-supply_tax_q_fun <- function(p){
-  q <- (p- 1) / supply_m
+supply_tax_q_fun <- function(p, tax){
+  q <- (p - tax) / supply_m
   return(q)
 }
 
-q_int_tax <- (agg_lm$coefficients["(Intercept)"] - 1)/(supply_m - agg_lm$coefficients["q"])
+q_int_tax <- (agg_lm$coefficients["(Intercept)"] - tax)/(supply_m - agg_lm$coefficients["q"])
 
 q_int_tax
 ```
@@ -600,7 +602,7 @@ b. The price of gasoline.
 
 ```{r}
 p_int_tax <- agg_p_fun(q_int_tax)
-supply_tax_p_fun(q_int_tax)
+supply_tax_p_fun(q_int_tax, tax)
 ```
 
 $`r round(p_int_tax, 2)` per gallon
@@ -663,14 +665,63 @@ $`r tax_revenue`
 
 4. Now, assume that all revenue from a tax will be redistributed to the two groups in proportion to their pre-tax consumption of gas. For example, if 80% of the gas was consumed by High income consumers, then they get 80% of the tax revenue. Also assume that “Low” income consumers bear all local environmental costs. For a range of gas taxes (ranging from \$0 - \$5.00/gal), calculate the effects of the tax on:
 
+```{r}
+
+q_low_tax <- low_q_fun(p_int_tax)
+q_high_tax <- high_q_fun(p_int_tax)
+
+pct_q_low_tax <- q_low_tax / q_int_tax
+pct_q_high_tax <- q_high_tax / q_int_tax
+
+```
+
+```{r}
+
+
+tax_vector <- seq(0, 5, 0.01)
+
+
+tax_scen <- data.frame(tax = tax_vector) %>%
+  mutate(tot_dmd_q = (agg_lm$coefficients["(Intercept)"] - tax)/(supply_m - agg_lm$coefficients["q"]),
+         p = agg_p_fun(tot_dmd_q),
+         low_dmd_q = low_q_fun(p),
+         high_dmd_q = high_q_fun(p),
+         pct_low = low_dmd_q / tot_dmd_q,
+         pct_high = high_dmd_q / tot_dmd_q,
+         env_cost = 1.5 * tot_dmd_q,
+         cs_low = ((low_lm$coefficients["(Intercept)"] - p) * low_dmd_q) / 2,
+         cs_high = ((high_lm$coefficients["(Intercept)"] - p) * high_dmd_q) / 2,
+         tax_revenue = tot_dmd_q * tax,
+         tax_low = tax_revenue * pct_low,
+         tax_high = tax_revenue * pct_high,
+         env_cost = 1.5 * tot_dmd_q,
+         welfare_low = cs_low + tax_low - env_cost,
+         welfare_high = cs_high + tax_high,
+         p_supply = supply_tax_p_fun(tot_dmd_q, tax),
+         p_supply_check = supply_tax_p_fun(tot_dmd_q, tax) - tax,
+         welfare_prod = (supply_tax_p_fun(tot_dmd_q, tax) * tot_dmd_q) / 2)
+```
+
+
 a. Overall welfare of “High” income consumers
+
+```{r}
+
+```
 
 
 b. Overall welfare of “Low” income consumers
 
+```{r}
+
+```
+
 
 c. Gas producers
 
+```{r}
+# loss of sales
+```
 
 
 5. A new electric car technology is invented and it lowers the demand curves of all income groups by half (vertically). Under these new demand curves, what are the effects on:
