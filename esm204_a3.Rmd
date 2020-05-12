@@ -11,6 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(here)
 library(janitor)
+library(kableExtra)
 
 data <- read_csv("esm204_hw3_data.csv") %>%
   janitor::clean_names() %>%
@@ -719,6 +720,19 @@ c. Gas producers
 
 (less sold at a higher price, with a lower cost of production)
 
+```{r, echo = FALSE}
+welfare_short %>% 
+  kable(col.names = c("Tax ($)",
+                      "Low Income Community",
+                      "High Income Community",
+                      "Gas Producers")
+  ) %>%
+  kable_styling(bootstrap_options = "striped", 
+                full_width = F,
+                position = "center"
+  ) %>% 
+  add_header_above(c("Welfare Under Various Gasoline Taxes" = 4))
+```
 
 
 5. A new electric car technology is invented and it lowers the demand curves of all income groups by half (vertically). Under these new demand curves, what are the effects on:
