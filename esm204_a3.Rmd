@@ -675,7 +675,7 @@ pct_q_low_tax <- q_low_tax / q_int_tax
 pct_q_high_tax <- q_high_tax / q_int_tax
 
 
-tax_vector <- seq(0, 5, 0.01)
+tax_vector <- seq(0, 8, 0.01)
 
 
 tax_scen <- data.frame(tax = tax_vector) %>%
