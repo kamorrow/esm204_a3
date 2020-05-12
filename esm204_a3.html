@@ -968,30 +968,42 @@ tax_vector &lt;- seq(0, 5, 0.01)
 
 
 tax_scen &lt;- data.frame(tax = tax_vector) %&gt;%
-  mutate(tot_dmd_q = (agg_lm$coefficients[&quot;(Intercept)&quot;] - tax)/(supply_m - agg_lm$coefficients[&quot;q&quot;]),
-         p = agg_p_fun(tot_dmd_q),
-         low_dmd_q = low_q_fun(p),
-         high_dmd_q = high_q_fun(p),
-         pct_low = low_dmd_q / tot_dmd_q,
-         pct_high = high_dmd_q / tot_dmd_q,
-         env_cost = 1.5 * tot_dmd_q,
-         cs_low = ((low_lm$coefficients[&quot;(Intercept)&quot;] - p) * low_dmd_q) / 2,
-         cs_high = ((high_lm$coefficients[&quot;(Intercept)&quot;] - p) * high_dmd_q) / 2,
-         tax_revenue = tot_dmd_q * tax,
-         tax_low = tax_revenue * pct_low,
-         tax_high = tax_revenue * pct_high,
-         env_cost = 1.5 * tot_dmd_q,
-         welfare_low = cs_low + tax_low - env_cost,
-         welfare_high = cs_high + tax_high,
-         p_supply = supply_tax_p_fun(tot_dmd_q, tax),
-         p_supply_check = supply_tax_p_fun(tot_dmd_q, tax) - tax,
-         welfare_prod = (supply_tax_p_fun(tot_dmd_q, tax) * tot_dmd_q) / 2)</code></pre>
+  mutate(tot_dmd_q = (agg_lm$coefficients[&quot;(Intercept)&quot;] - tax)/(supply_m - agg_lm$coefficients[&quot;q&quot;]), # Total quantity demanded at a given tax
+         p = agg_p_fun(tot_dmd_q), # price at quantity demanded
+         low_dmd_q = low_q_fun(p), # quantity demanded by low income community
+         high_dmd_q = high_q_fun(p), # quantity demanded by high income community
+         pct_low = low_dmd_q / tot_dmd_q, # percent of demand accounted for by low income community
+         pct_high = high_dmd_q / tot_dmd_q, # percent of demand accounted for by high income community
+         env_cost = 1.5 * tot_dmd_q, # environmental cost
+         cs_low = ((low_lm$coefficients[&quot;(Intercept)&quot;] - p) * low_dmd_q) / 2, # consumer surplus of low income community
+         cs_high = ((high_lm$coefficients[&quot;(Intercept)&quot;] - p) * high_dmd_q) / 2, # consumer surplus of high income community
+         tax_revenue = tot_dmd_q * tax, # tax revenue
+         tax_low = tax_revenue * pct_low, # tax revenue returned to low income community
+         tax_high = tax_revenue * pct_high, # tax revenue returned to high income community
+         welfare_low = cs_low + tax_low - env_cost, # welfare of low income community (consumer surplus, tax returned, and env. cost)
+         welfare_high = cs_high + tax_high, # welfare of high income community (consumer surplus and tax returned)
+         p_supply = supply_tax_p_fun(tot_dmd_q, tax), # price of quantity supplied
+         p_supply_check = supply_tax_p_fun(tot_dmd_q, tax) - tax, # check
+         welfare_prod = (supply_tax_p_fun(tot_dmd_q, tax) * tot_dmd_q) / 2) # welfare of producers
+
+tax_short &lt;- tax_scen %&gt;%
+  filter(tax %in% seq(0, 5, by = 0.5))
+
+welfare_short &lt;- tax_short %&gt;%
+  select(tax,
+         welfare_low,
+         welfare_high,
+         welfare_prod) %&gt;%
+  rename(&quot;Tax ($)&quot; = tax,
+         &quot;Low Income Community&quot; = welfare_low,
+         &quot;High Income Community&quot; = welfare_high,
+         &quot;Gas Producers&quot; = welfare_prod)</code></pre>
 <ol style="list-style-type: lower-alpha">
 <li><p>Overall welfare of “High” income consumers</p></li>
 <li><p>Overall welfare of “Low” income consumers</p></li>
 <li><p>Gas producers</p></li>
 </ol>
-<pre class="r"><code># less sold at a higher price, with a lower cost of production</code></pre>
+<p>(less sold at a higher price, with a lower cost of production)</p>
 <ol start="5" style="list-style-type: decimal">
 <li>A new electric car technology is invented and it lowers the demand curves of all income groups by half (vertically). Under these new demand curves, what are the effects on:</li>
 </ol>
@@ -1069,7 +1081,7 @@ agg_ev_check &lt;- data.frame(p = p_vector) %&gt;%
 q_int_ev &lt;-  (agg_ev_lm$coefficients[&quot;(Intercept)&quot;] - 0) / (supply_m - agg_ev_lm$coefficients[&quot;q_tot&quot;])
 p_int_ev &lt;- agg_p_ev_fun(q_int_ev)
 
-# 
+# Quantity demanded for each community at p
 q_low_ev &lt;- low_q_ev_fun(p_int_ev)
 q_high_ev &lt;- high_q_ev_fun(p_int_ev)
 
@@ -1135,6 +1147,20 @@ ggplot() +
 <ol start="6" style="list-style-type: decimal">
 <li>Compare two situations: (1) Gas tax of $T/gal. but no electric car technology and (2) No gas tax but with electric car technology. What value of T (i.e. what gas tax) makes the local environmental quality equal between these two situations?</li>
 </ol>
+<pre class="r"><code># local environmental quality = base level env - MEC
+
+# MEC = q * 1.5
+
+# From the tax scenario:
+# tot_dmd_q = (agg_lm$coefficients[&quot;(Intercept)&quot;] - tax)/(supply_m - agg_lm$coefficients[&quot;q&quot;])
+
+# so...
+# tax = agg_lm$coefficients[&quot;(Intercept)&quot;] - (tot_dmd_q * (supply_m - agg_lm$coefficients[&quot;q&quot;]))
+
+# where tot_dmd_q = q_int_ev
+
+tax_mec_eq_ev &lt;- agg_lm$coefficients[&quot;(Intercept)&quot;] - (q_int_ev * (supply_m - agg_lm$coefficients[&quot;q&quot;]))</code></pre>
+<p>$7.34 per gallon</p>
 </div>
 
 
