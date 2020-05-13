@@ -6,7 +6,7 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE)
 
 library(tidyverse)
 library(here)
@@ -291,14 +291,17 @@ ggplot() +
             hjust = 0,
             vjust = 1) +
   # Aesthetics
-  labs(title = "Demand for Gasoline",
+  labs(title = "Supply & Demand for Gasoline",
+       subtitle = "Status Quo",
        y = "Price (dollars)",
        x = "Quantity (gallons)",
-       caption = "\nESM 204 Spring 2020\nElliott Matthews & Keene Morrow") +
+       caption = "Figure 1.\nESM 204 Spring 2020\nElliott Matthews & Keene Morrow") +
   scale_x_continuous(expand = c(0, 0)) +
   scale_y_continuous(expand = c(0, 0)) +
   theme_minimal() +
   theme(plot.caption = element_text(hjust = 0, face = "italic"))
+
+ggsave("sd_sq.png", width = 7, height = 5)
 ```
 
 
@@ -355,7 +358,7 @@ ggplot() +
        subtitle = "Status Quo",
        y = "Price (dollars)",
        x = "Quantity (gallons)",
-       caption = "\nESM 204 Spring 2020\nElliott Matthews & Keene Morrow") +
+       caption = "Figure 2.\nESM 204 Spring 2020\nElliott Matthews & Keene Morrow") +
   scale_x_continuous(expand = c(0, 0)) +
   scale_y_continuous(expand = c(0, 0)) +
   theme_minimal() +
@@ -374,8 +377,12 @@ benefit_p_sq <- integrate(supply_fun, 0, dmd_sq_agg_q)$value
 # word - KM
 # same as (dmd_sq_agg_q * 3)/2
 # Yes, I agree ^ - GEM
+```
+Benefit to Consumers: `r benefit_c_sq`
+Benefit to Producers: `r benefit_p_sq`
 
 
+```{r}
 # Environmental Cost under Status Quo
 
 #Need to add the external cost listed in the problem statement to the supply curve we calculate. From there we solve for the new P and Q (the external cost shifts the supply curve upward, P goes up, Q goes down). The environmental cost is the rectangular area defined by PxQ. **** We do this for both local and world values **** - EM
@@ -565,11 +572,11 @@ ggplot() +
              color = "black") +
   geom_vline(xintercept = 559090.9,
              color = "black") +
-  labs(title = "",
-       subtitle = "",
+  labs(title = "Supply and Demand for Gasoline",
+       subtitle = "$1.00/gal Gast Tax",
        y = "Price (dollars)",
        x = "Quantity (gallons)",
-       caption = "\nESM 204 Spring 2020\nElliott Matthews & Keene Morrow") +
+       caption = "Figure 3.\nESM 204 Spring 2020\nElliott Matthews & Keene Morrow") +
   scale_x_continuous(expand = c(0, 0)) +
   scale_y_continuous(expand = c(0, 0)) +
   theme_minimal() +
@@ -709,6 +716,41 @@ welfare_short <- tax_short %>%
          "Low Income Community" = welfare_low,
          "High Income Community" = welfare_high,
          "Gas Producers" = welfare_prod)
+
+ggplot(data = tax_short) +
+  geom_line(aes(x = tax,
+                y = welfare_prod),
+            color = "purple") +
+  geom_text(aes(y = 1500000,
+                x = 4),
+            label = "Gas Producers",
+            color = "purple",
+            hjust = 0) +
+  geom_line(aes(x = tax,
+                y = welfare_high),
+            color = "dark green") +
+  geom_text(aes(y = 3200000,
+                x = 4),
+            label = "High Income",
+            color = "dark green",
+            hjust = 0) +
+  geom_line(aes(x = tax,
+                y = welfare_low),
+            color = "blue") +
+  geom_text(aes(y = 100000,
+                x = 4),
+            label = "Low Income",
+            color = "blue",
+            hjust = 0) +
+  labs(title = "Welfare by Gasoline Tax Level",
+       # subtitle = "",
+       x = "Tax (dollars)",
+       y = "Welfare (dollars)",
+       caption = "Figure 4.\nESM 204 Spring 2020\nElliott Matthews & Keene Morrow") +
+  scale_x_continuous(expand = c(0, 0)) +
+  theme_minimal() +
+  theme(plot.caption = element_text(hjust = 0, face = "italic"))
+  
 ```
 
 
@@ -721,17 +763,17 @@ c. Gas producers
 (less sold at a higher price, with a lower cost of production)
 
 ```{r, echo = FALSE}
-welfare_short %>% 
-  kable(col.names = c("Tax ($)",
-                      "Low Income Community",
-                      "High Income Community",
-                      "Gas Producers")
-  ) %>%
-  kable_styling(bootstrap_options = "striped", 
-                full_width = F,
-                position = "center"
-  ) %>% 
-  add_header_above(c("Welfare Under Various Gasoline Taxes" = 4))
+# welfare_short %>% 
+#   kable(col.names = c("Tax ($)",
+#                       "Low Income Community",
+#                       "High Income Community",
+#                       "Gas Producers")
+#   ) %>%
+#   kable_styling(bootstrap_options = "striped", 
+#                 full_width = F,
+#                 position = "center"
+#   ) %>% 
+#   add_header_above(c("Welfare Under Various Gasoline Taxes" = 4))
 ```
 
 
@@ -816,6 +858,12 @@ p_int_ev <- agg_p_ev_fun(q_int_ev)
 q_low_ev <- low_q_ev_fun(p_int_ev)
 q_high_ev <- high_q_ev_fun(p_int_ev)
 
+# welfare
+
+ev_welfare_c <- ((agg_ev_lm$coefficients["(Intercept)"] - p_int_ev) * q_int_ev) / 2
+
+ev_welfare_p <- ((p_int_ev) * q_int_ev) / 2
+
 #------------------
 # Now make it a plot
 #------------------
@@ -844,17 +892,17 @@ ggplot() +
     geom_point(aes(x = q_high_ev,
                  y = p_int_ev)) +
   geom_hline(aes(yintercept = p_int_ev)) +
-  labs(title = "Electric Vehicle & No Gas Tax",
-       subtitle = "",
+  labs(title = "Supply and Demand for Gasoline",
+       subtitle = "Electric Vehicle & No Gas Tax",
        y = "Price (dollars)",
        x = "Quantity (gallons)",
-       caption = "\nESM 204 Spring 2020\nElliott Matthews & Keene Morrow") +
+       caption = "Figure 5.\nESM 204 Spring 2020\nElliott Matthews & Keene Morrow") +
   scale_x_continuous(expand = c(0, 0)) +
   scale_y_continuous(expand = c(0, 0)) +
   theme_minimal() +
   theme(plot.caption = element_text(hjust = 0, face = "italic"))
   
-            
+
 
 ```
 
@@ -883,6 +931,10 @@ e. Rest of world environmental damage from gasoline
 
 $`r as.character(q_int_ev * 0.5)`
 
+Extra:
+Consumer Welfare: ev_welfare_c
+
+Producer Welfare: ev_welfare_p
 
 6. Compare two situations: (1) Gas tax of $T/gal. but no electric car technology and (2) No gas tax but with electric car technology. What value of T (i.e. what gas tax) makes the local environmental quality equal between these two situations?
 
