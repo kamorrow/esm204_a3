@@ -492,7 +492,7 @@ ggplot() +
 ```
 
 National Environmental Cost: `r ntl_env_cost`
-Internationsl Environmental Cost: `r intl_env_cost`
+International Environmental Cost: `r intl_env_cost`
 
 2. How is the current consumer benefit divided between “High” and “Low” income consumers?
 
@@ -746,7 +746,7 @@ ggplot(data = tax_short) +
        # subtitle = "",
        x = "Tax (dollars)",
        y = "Welfare (dollars)",
-       caption = "Figure 4.\nESM 204 Spring 2020\nElliott Matthews & Keene Morrow") +
+       caption = "Figure 2.\nESM 204 Spring 2020\nElliott Matthews & Keene Morrow") +
   scale_x_continuous(expand = c(0, 0)) +
   theme_minimal() +
   theme(plot.caption = element_text(hjust = 0, face = "italic"))
@@ -860,7 +860,11 @@ q_high_ev <- high_q_ev_fun(p_int_ev)
 
 # welfare
 
-ev_welfare_c <- ((agg_ev_lm$coefficients["(Intercept)"] - p_int_ev) * q_int_ev) / 2
+ev_welfare_low <- (((low_lm$coefficients["(Intercept)"] / 2) - p_int_ev) * q_low_ev) / 2
+
+ev_welfare_high <- (((high_lm$coefficients["(Intercept)"]/2) - p_int_ev) * q_high_ev) / 2
+
+ev_welfare_c <- ev_welfare_high + ev_welfare_low
 
 ev_welfare_p <- ((p_int_ev) * q_int_ev) / 2
 
@@ -901,9 +905,6 @@ ggplot() +
   scale_y_continuous(expand = c(0, 0)) +
   theme_minimal() +
   theme(plot.caption = element_text(hjust = 0, face = "italic"))
-  
-
-
 ```
 
 
@@ -932,9 +933,11 @@ e. Rest of world environmental damage from gasoline
 $`r as.character(q_int_ev * 0.5)`
 
 Extra:
-Consumer Welfare: ev_welfare_c
+Consumer Welfare: `r ev_welfare_c`
+Low income welfare: `r `
+High Income Welfare: `r `
 
-Producer Welfare: ev_welfare_p
+Producer Welfare: `r ev_welfare_p`
 
 6. Compare two situations: (1) Gas tax of $T/gal. but no electric car technology and (2) No gas tax but with electric car technology. What value of T (i.e. what gas tax) makes the local environmental quality equal between these two situations?
 
